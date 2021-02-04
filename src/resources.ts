@@ -1,6 +1,7 @@
 import { Texture } from 'excalibur';
 import sword from './images/sword.png';
 import tile from './images/tile.png';
+import spritefont from './images/SpriteFont.png';
 
 /**
  * Default global resource dictionary. This gets loaded immediately
@@ -8,7 +9,8 @@ import tile from './images/tile.png';
  */
 const Resources = {
     Sword: new Texture(sword),
-    Tile: new Texture(tile)
+    Tile: new Texture(tile),
+    SpriteFont: new Texture(spritefont),
 }
 
 export { Resources }
