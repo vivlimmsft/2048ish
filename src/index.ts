@@ -1,4 +1,4 @@
-import { Engine, Loader, DisplayMode, Vector } from 'excalibur';
+import { Engine, Loader, DisplayMode, Vector, Input } from 'excalibur';
 import { LevelOne } from './scenes/level-one/level-one';
 import { Player } from './actors/player/player';
 import { Tile } from './actors/player/tile';
@@ -8,10 +8,8 @@ import { Resources } from './resources';
  * Managed game class
  */
 export class Game extends Engine {
-  private player: Player;
   private levelOne: LevelOne;
   private tiles: Tile[];
-  private lastPointerPosition: Vector | undefined;
 
   constructor() {
     super({ displayMode: DisplayMode.FullScreen });
@@ -28,20 +26,6 @@ export class Game extends Engine {
       
     }
 
-
-    game.input.pointers.primary.on('move', function (evt) {
-      if (game.lastPointerPosition != undefined){
-        const scale = 2;
-        let delta = evt.pos.clone().sub(game.lastPointerPosition);
-          console.log(delta);
-        for (var t of game.tiles){
-          t.vel.setTo(t.vel.x + (delta.x * scale), t.vel.y + (scale * delta.y));
-          //t.pos.x += delta.x;
-          //t.pos.y += delta.y;
-        }
-      }
-      game.lastPointerPosition = evt.pos;
-    });
     game.add('levelOne', this.levelOne);
 
     // Automatically load all default resources
