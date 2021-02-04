@@ -17,7 +17,7 @@ export class Game extends Engine {
   private lastKnownPointerPosition: Vector;
 
   constructor() {
-    super({ displayMode: DisplayMode.FullScreen, width: 128, height: 128 });
+    super({ displayMode: DisplayMode.FullScreen, width: 128, height: 128, suppressConsoleBootMessage: true, suppressPlayButton: true });
   }
 
   public start() {

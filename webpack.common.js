@@ -41,7 +41,7 @@ module.exports = {
   plugins: [
     new CleanWebpackPlugin(),
     new HtmlWebPackPlugin({
-      title: "Excalibur Webpack Sample",
+      title: "2048ish",
     }),
   ],
 };
