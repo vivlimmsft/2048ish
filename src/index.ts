@@ -13,8 +13,11 @@ export class Game extends Engine {
   public font: SpriteFont;
   public newTileTimer: Timer;
 
+  private pointerIsDown: boolean = false;
+  private lastKnownPointerPosition: Vector;
+
   constructor() {
-    super({ displayMode: DisplayMode.FullScreen });
+    super({ displayMode: DisplayMode.FullScreen, width: 128, height: 128 });
   }
 
   public start() {
@@ -23,7 +26,7 @@ export class Game extends Engine {
     // Create new scene with a player
     this.levelOne = new LevelOne(this);
 
-    for (let i = 0; i < 4; i++){
+    for (let i = 0; i < 9; i++){
       this.addTileOnGrid();
     }
 
@@ -39,19 +42,28 @@ export class Game extends Engine {
 
     this.newTileTimer = new Timer({fcn: () => {
       console.log("new tile");
-      //this.addTileOnGrid();
+      this.addTileOnGrid();
     },
-    interval: 5, repeats: true});
+    interval: 1000, repeats: true});
 
     this.screen.resolution = {width: 256, height: 256};
+    this.levelOne.add(this.newTileTimer);
     this.add('levelOne', this.levelOne);
-    this.add(this.newTileTimer);
 
     this.input.keyboard.on('release', (evt) => {
       if (evt.key == Input.Keys.Space) {
         this.addTileOnGrid();
       }
-    })
+    });
+
+    this.input.pointers.primary.on('down', (evt) => {
+      this.pointerIsDown = true;
+      this.lastKnownPointerPosition = evt.worldPos;
+    });
+
+    this.input.pointers.primary.on('up', (evt) => {
+      this.pointerIsDown = false;
+    });
 
     // Automatically load all default resources
     const loader = new Loader(Object.values(Resources));
@@ -59,13 +71,53 @@ export class Game extends Engine {
     return super.start(loader);
   }
 
+  public onPostUpdate(engine, delta){
+    // If the pointer is holding down on an edge of the screen, accelerate tiles in that direction.
+
+    if (this.pointerIsDown){
+      let position = this.lastKnownPointerPosition;
+      let worldBounds = this.getWorldBounds();
+      let xTouchRegionWidth = worldBounds.width / 3;
+      let yTouchRegionHeight = worldBounds.height / 3;
+
+      let dx = 0;
+      let dy = 0;
+
+      if (position.x > xTouchRegionWidth * 2){
+        // touching right side of screen
+        dx = 1;
+      }
+      else if (position.x < xTouchRegionWidth){
+        // touching left side of screen
+        dx = -1;
+      }
+
+      if (position.y > yTouchRegionHeight * 2){
+        // touching bottom of screen
+        dy = 1;
+      }
+      else if (position.y < yTouchRegionHeight){
+        dy = -1;
+      }
+      if (dx != 0 || dy != 0){
+        for (let tile of this.tiles.filter(tile => !tile.isKilled())){
+          tile.accelerate(dx, dy);
+        }
+      }
+    }
+
+  }
+
   private addTileOnGrid(){
-      let x = Math.random() * this.canvasWidth;
-      let y = Math.random() * this.canvasHeight;
-      let value = Math.pow(2, Math.floor(Math.random() * 3));
-      const tile = new Tile(game, value, x, y);
-      this.levelOne.add(tile);
-      this.tiles.push(tile);
+    if (this.tiles.filter(tile => !tile.isKilled()).length > 64) {
+      return; // max number of active tiles tiles
+    }
+    let x = Math.random() * this.canvasWidth;
+    let y = Math.random() * this.canvasHeight;
+    let value = Math.pow(2, Math.floor(Math.random() * 3));
+    const tile = new Tile(game, value, x, y);
+    this.levelOne.add(tile);
+    this.tiles.push(tile);
   }
 }
 const game = new Game();
