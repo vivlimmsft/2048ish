@@ -1,4 +1,4 @@
-import { Actor, CollisionType, Color, Input, Label, vec, Vector } from 'excalibur';
+import { Actor, CollisionType, Color, Input, Label, SpriteSheet, vec, Vector } from 'excalibur';
 import { Resources } from '../../resources';
 import { Game } from '../../index';
 
@@ -6,11 +6,13 @@ export class Tile extends Actor {
   private tileValue : number;
   private speed : number = 20;
   private mergeAlignmentDistance = 8;
+  private mergeMinimumVelocity = 10;
   private label : Label;
   private isMerged : boolean;
   private mergedWith : Tile | undefined;
   private mergeProgressCountdown : number;
   private mergeOriginalPosition : Vector;
+  private spriteSheet : SpriteSheet;
   constructor(game: Game, value: number, x: number, y: number) {
     super({
       pos: vec(x, y),
@@ -35,16 +37,36 @@ export class Tile extends Actor {
             return;
           }
 
+          // Require a minimum alignment for the centers of the two tiles before considering merging them.
           if (Math.abs(tileA.pos.x - tileB.pos.x) < this.mergeAlignmentDistance || Math.abs(tileA.pos.y - tileB.pos.y) < this.mergeAlignmentDistance)
           {
-            tileA.tileValue += tileB.tileValue;
-            tileB.tileValue = tileA.tileValue;
-            //tileB.kill();
-            tileB.body.collider.type = CollisionType.PreventCollision;
-            tileB.isMerged = true;
-            tileB.mergedWith = tileA;
-            tileB.mergeProgressCountdown = 100;
-            tileB.mergeOriginalPosition = tileB.pos.clone();
+            // Require either one of the tiles to be moving towards the other.
+            if (
+              (Math.abs(tileA.body.vel.x) > Math.abs(tileA.body.vel.y) && // tile A is moving horizontally more than it is vertically
+                tileA.body.vel.x > this.mergeMinimumVelocity && tileB.pos.x > tileA.pos.x || // tile A moving right and tile B is to the right of tile A
+                tileA.body.vel.x < -1 * this.mergeMinimumVelocity && tileB.pos.x < tileA.pos.x) || // tile A moving left and tile B is to the left of tile A
+              (Math.abs(tileB.body.vel.x) > Math.abs(tileB.body.vel.y) && // tile B is moving horizontally more than it is vertically
+                tileB.body.vel.x > this.mergeMinimumVelocity && tileA.pos.x > tileB.pos.x || // tile B moving right and tile A is to the right of tile B
+                tileB.body.vel.x < -1 * this.mergeMinimumVelocity && tileA.pos.x < tileB.pos.x) || // tile B moving left and tile A is to the left of tile B
+              (Math.abs(tileA.body.vel.y) > Math.abs(tileA.body.vel.x) && // tile A is moving vertically more than it is vertically
+                tileA.body.vel.y > this.mergeMinimumVelocity && tileB.pos.y < tileA.pos.y || // tile A moving down and tile B is to the bottom of tile A
+                tileA.body.vel.y < -1 * this.mergeMinimumVelocity && tileB.pos.y > tileA.pos.y) || // tile A moving up and tile B is to the top of tile A
+              (Math.abs(tileB.body.vel.y) > Math.abs(tileB.body.vel.x) && // tile B is moving vertically more than it is vertically
+                tileB.body.vel.y > this.mergeMinimumVelocity && tileA.pos.y < tileB.pos.y || // tile B moving down and tile A is to the bottom of tile A
+                tileB.body.vel.y < -1 * this.mergeMinimumVelocity && tileA.pos.y < tileB.pos.y) // tile A moving up and tile A is to the top of tile B
+            ){
+              // begin merging the tiles.
+              tileA.tileValue += tileB.tileValue;
+              tileB.tileValue = tileA.tileValue;
+              tileB.body.collider.type = CollisionType.PreventCollision;
+              tileB.isMerged = true;
+              tileB.mergedWith = tileA;
+              tileB.mergeProgressCountdown = 100;
+              tileB.mergeOriginalPosition = tileB.pos.clone();
+
+              tileA.setDrawingForValue();
+              tileB.setDrawingForValue();
+            }
           }
         }
       }
@@ -53,7 +75,13 @@ export class Tile extends Actor {
 
 
   onInitialize() {
-    this.addDrawing(Resources.Tile);
+    this.spriteSheet = new SpriteSheet(Resources.Tile, 4, 4, 32, 32);
+
+    for (let i = 0; i < 16; i++) {
+      this.addDrawing(i, this.spriteSheet.getSprite(i));
+    }
+
+    this.setDrawingForValue();
   }
 
   public draw(engine, delta){
@@ -144,5 +172,15 @@ export class Tile extends Actor {
 
   public accelerate(x: number, y: number){
     this.vel.setTo(this.vel.x + (this.speed * x), this.vel.y + (this.speed * y));
+  }
+
+  private setDrawingForValue(){
+    let index = Math.log2(this.tileValue);
+    if (index < 0 || index > 16)
+    {
+      index = 0;
+    }
+
+    this.setDrawing(index);
   }
 }
