@@ -1,8 +1,21 @@
-# Excalibur TypeScript & Webpack Starter
+# 2048ish
 
-This is a barebones [Excalibur](https://excaliburjs.com) game engine starter built using Typescript 4 & Webpack 5. It's a great starting place to jumpstart building your game! This repo is a template and can be used to [create your own repository](https://github.com/excaliburjs/template-ts-webpack/generate) in GitHub.
+[🕹 *play now*](https://vvn.space/2048ish)
 
-Check out our [other samples](https://excaliburjs.com/samples) while you build your game or [ask us questions](https://github.com/excaliburjs/Excalibur/discussions).
+This is a game that's like 2048, but not too much.
+Built on top of the barebones [Excalibur](https://excaliburjs.com) game engine starter [template](https://github.com/excaliburjs/template-ts-webpack/generate).
+
+## Controls
+
+WASD or arrow keys: move in that direction
+
+smushing together blocks that have the same value will combine them
+
+that's it!
+
+# Development instructions
+
+(these are just from the template)
 
 ## Get Started
 
